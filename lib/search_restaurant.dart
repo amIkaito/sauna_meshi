@@ -35,12 +35,37 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
       final data = json.decode(response.body);
       List<Map<String, dynamic>> restaurants = [];
 
+      // 除外したいキーワードのリストを作成します
+      List<String> excludedKeywords = [
+        'カフェ',
+        'コンビニ',
+        'ドラッグストア',
+        'ホテル',
+        'ドンキホーテ',
+        'カラオケ',
+        // その他の除外したいキーワードを追加
+      ];
+
       for (var result in data['results']) {
-        restaurants.add({
-          'name': result['name'],
-          'lat': result['geometry']['location']['lat'],
-          'lng': result['geometry']['location']['lng'],
-        });
+        String name = result['name'];
+        bool isExcluded = false;
+
+        // キーワードリストに含まれる店舗を確認し、除外フラグを設定します
+        for (String keyword in excludedKeywords) {
+          if (name.contains(keyword)) {
+            isExcluded = true;
+            break;
+          }
+        }
+
+        // 除外フラグが立っていない場合のみ、リストに追加します
+        if (!isExcluded) {
+          restaurants.add({
+            'name': name,
+            'lat': result['geometry']['location']['lat'],
+            'lng': result['geometry']['location']['lng'],
+          });
+        }
       }
 
       return restaurants;
@@ -149,6 +174,24 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
     );
   }
 
+  Widget _buildGoToCurrentLocationButton() {
+    return FloatingActionButton(
+      onPressed: _goToCurrentLocation,
+      child: Icon(Icons.my_location),
+    );
+  }
+
+// 現在地に戻る処理を追加します
+  void _goToCurrentLocation() {
+    mapController.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(currentPosition.latitude, currentPosition.longitude),
+          zoom: 17.0,
+        ),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -178,10 +221,9 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
                 return Center(child: Text("Error: ${snapshot.error}"));
               } else {
                 currentPosition = snapshot.data!;
-                return Column(
+                return Stack(
                   children: [
-                    Expanded(
-                      child: GoogleMap(
+                    GoogleMap(
                         onMapCreated: _onMapCreated,
                         initialCameraPosition: CameraPosition(
                           zoom: 17,
@@ -201,7 +243,11 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
                         myLocationEnabled: false,
                         myLocationButtonEnabled: true,
                       ),
-                    ),
+                      Positioned(
+                        bottom: 16,
+                        right: 16,
+                        child: _buildGoToCurrentLocationButton(),
+                      ),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Row(
