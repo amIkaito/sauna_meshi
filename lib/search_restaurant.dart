@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -13,98 +14,126 @@ class SearchRestaurantPage extends StatefulWidget {
 
 class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
   late GoogleMapController mapController;
-  Position? currentPosition;
+  late Position currentPosition;
+  late BitmapDescriptor _arrowIcon;
+  late StreamSubscription<Position> _positionStreamSubscription;
+  double _heading = 0;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance?.addPostFrameCallback((_) async {
-      await _requestLocationPermission();
-      _getCurrentLocation().then((position) {
-        setState(() {
-          currentPosition = position;
-        });
-      });
-    });
+    _loadArrowIcon();
+  }
+
+  Future<void> _loadArrowIcon() async {
+    _arrowIcon = await BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(devicePixelRatio: 2.0), 'assets/arrow.png');
+  }
+
+  Future<Position> _initializeLocation() async {
+    await _requestLocationPermission();
+    return await _getCurrentLocation();
   }
 
   Future<void> _requestLocationPermission() async {
-    var status = await Permission.location.request();
-    if (status == PermissionStatus.denied) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) => AlertDialog(
-          title: Text('位置情報の利用が許可されていません'),
-          content: Text('アプリの機能を使用するためには、位置情報の利用を許可する必要があります。'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('OK'),
-            ),
-          ],
-        ),
-      );
+    PermissionStatus status = await Permission.locationWhenInUse.request();
+
+    if (status.isDenied) {
+      // ユーザーが位置情報の許可を拒否した場合の処理
+      print("位置情報の許可が拒否されました。");
     }
   }
 
-
   Future<Position> _getCurrentLocation() async {
-    try {
-      return await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
-    } on Exception catch (e) {
-      print('位置情報の取得に失敗しました: ${e.toString()}');
-      return Position(
-          latitude: 35.6895,
-          longitude: 139.6917,
-          timestamp: DateTime.now(),
-          accuracy: 0.0,
-          altitude: 0.0,
-          heading: 0.0,
-          speed: 0.0,
-          speedAccuracy: 0.0,
-          floor: 0);
-    }
+    return await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+  }
+
+  void _startLocationUpdates() {
+    _positionStreamSubscription = Geolocator.getPositionStream(
+      desiredAccuracy: LocationAccuracy.best,
+      intervalDuration: Duration(seconds: 1),
+    ).listen((Position position) {
+      _updateHeading(position);
+    });
   }
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
+    _startLocationUpdates();
+  }
+
+  void _updateHeading(Position position) {
+    double newHeading = position.heading;
+
+    if (mapController != null) {
+      setState(() {
+        currentPosition = position;
+        _heading = newHeading;
+      });
+
+      mapController.animateCamera(CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(position.latitude, position.longitude),
+          zoom: 17.0,
+        ),
+      ));
+    }
+  }
+
+  @override
+  void dispose() {
+    _positionStreamSubscription.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Text(
-          'サウナ飯',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          title: Text(
+            'サウナ飯',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
+        body: FutureBuilder<Position>(
+        future: _initializeLocation(),
+    builder: (BuildContext context, AsyncSnapshot<Position> snapshot) {
+    if (snapshot.connectionState == ConnectionState.done) {
+    if (snapshot.hasError) {
+    return Center(child: Text("Error: ${snapshot.error}"));
+    } else {
+    currentPosition = snapshot.data!;
+    return GoogleMap(
+    onMapCreated: _onMapCreated,
+      initialCameraPosition: CameraPosition(
+        zoom: 17,
+        target: LatLng(currentPosition.latitude, currentPosition.longitude),
       ),
-      body: currentPosition == null
-          ? Center(child: CircularProgressIndicator())
-          : GoogleMap(
-        onMapCreated: _onMapCreated,
-        initialCameraPosition: CameraPosition(
-          zoom: 17,
-          target: LatLng(currentPosition!.latitude, currentPosition!.longitude),
-          tilt: 45.0,
-          bearing: 90.0,
+      markers: {
+        Marker(
+          markerId: MarkerId("user_marker"),
+          position: LatLng(currentPosition.latitude, currentPosition.longitude),
+          icon: _arrowIcon,
+          rotation: _heading,
+          anchor: Offset(0.5, 0.5),
         ),
-        myLocationEnabled: true,
-        myLocationButtonEnabled: true,
-        markers: {
-          Marker(
-            markerId: MarkerId('current_location'),
-            position: LatLng(
-                currentPosition!.latitude, currentPosition!.longitude),
-          ),
-        },
-      ),
+      },
+      myLocationEnabled: false,
+      myLocationButtonEnabled: true,
+    );
+    }
+    } else {
+      return Center(child: CircularProgressIndicator());
+    }
+    },
+        ),
     );
   }
 }
