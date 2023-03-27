@@ -4,6 +4,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator_platform_interface/geolocator_platform_interface.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class SearchRestaurantPage extends StatefulWidget {
   const SearchRestaurantPage({Key? key}) : super(key: key);
@@ -13,16 +15,64 @@ class SearchRestaurantPage extends StatefulWidget {
 }
 
 class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
+  late Future<Position> _initialLocationFuture;
   late GoogleMapController mapController;
   late Position currentPosition;
   late BitmapDescriptor _arrowIcon;
   late StreamSubscription<Position> _positionStreamSubscription;
+  int _searchRadius = 200;
   double _heading = 0;
+
+  Future<List<Map<String, dynamic>>> fetchNearbyRestaurants(
+      double lat, double lng, int radius, String apiKey) async {
+    final String url =
+        'https://maps.googleapis.com/maps/api/place/nearbysearch/json?' +
+            'location=$lat,$lng&radius=$radius&type=restaurant&opennow&key=$apiKey';
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      List<Map<String, dynamic>> restaurants = [];
+
+      for (var result in data['results']) {
+        restaurants.add({
+          'name': result['name'],
+          'lat': result['geometry']['location']['lat'],
+          'lng': result['geometry']['location']['lng'],
+        });
+      }
+
+      return restaurants;
+    } else {
+      throw Exception('Failed to fetch nearby restaurants');
+    }
+  }
+  Set<Marker> _markers = {};
+
+  Future<void> _loadNearbyRestaurants() async {
+    final restaurants = await fetchNearbyRestaurants(
+        currentPosition.latitude, currentPosition.longitude, _searchRadius, 'AIzaSyDgO_lHM9F3zzKSQWDoVdpyvTulCXCoc_Q');
+
+    setState(() {
+      _markers.clear();
+      for (var restaurant in restaurants) {
+        _markers.add(Marker(
+          markerId: MarkerId(restaurant['name']),
+          position: LatLng(restaurant['lat'], restaurant['lng']),
+          infoWindow: InfoWindow(title: restaurant['name']),
+        ));
+      }
+    });
+  }
+
+
 
   @override
   void initState() {
     super.initState();
     _loadArrowIcon();
+    _initialLocationFuture = _initializeLocation();
   }
 
   Future<void> _loadArrowIcon() async {
@@ -61,6 +111,7 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
+    _loadNearbyRestaurants();
     _startLocationUpdates();
   }
 
@@ -81,6 +132,23 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
       ));
     }
   }
+
+  Widget _buildSearchRadiusButton(int radius) {
+    return ElevatedButton(
+      onPressed: () {
+        setState(() {
+          _searchRadius = radius;
+        });
+        _loadNearbyRestaurants();
+// TODO: ここで検索範囲が変更されたときの処理を実行します
+      },
+      child: Text('$radius m'),
+      style: ElevatedButton.styleFrom(
+        primary: _searchRadius == radius ? Colors.blue : Colors.grey,
+      ),
+    );
+  }
+
 
   @override
   void dispose() {
@@ -103,37 +171,57 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
           ),
         ),
         body: FutureBuilder<Position>(
-        future: _initializeLocation(),
-    builder: (BuildContext context, AsyncSnapshot<Position> snapshot) {
-    if (snapshot.connectionState == ConnectionState.done) {
-    if (snapshot.hasError) {
-    return Center(child: Text("Error: ${snapshot.error}"));
-    } else {
-    currentPosition = snapshot.data!;
-    return GoogleMap(
-    onMapCreated: _onMapCreated,
-      initialCameraPosition: CameraPosition(
-        zoom: 17,
-        target: LatLng(currentPosition.latitude, currentPosition.longitude),
-      ),
-      markers: {
-        Marker(
-          markerId: MarkerId("user_marker"),
-          position: LatLng(currentPosition.latitude, currentPosition.longitude),
-          icon: _arrowIcon,
-          rotation: _heading,
-          anchor: Offset(0.5, 0.5),
-        ),
-      },
-      myLocationEnabled: false,
-      myLocationButtonEnabled: true,
-    );
-    }
-    } else {
-      return Center(child: CircularProgressIndicator());
-    }
-    },
-        ),
+          future: _initialLocationFuture,
+          builder: (BuildContext context, AsyncSnapshot<Position> snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              if (snapshot.hasError) {
+                return Center(child: Text("Error: ${snapshot.error}"));
+              } else {
+                currentPosition = snapshot.data!;
+                return Column(
+                  children: [
+                    Expanded(
+                      child: GoogleMap(
+                        onMapCreated: _onMapCreated,
+                        initialCameraPosition: CameraPosition(
+                          zoom: 17,
+                          target: LatLng(currentPosition.latitude,
+                              currentPosition.longitude),
+                        ),
+                        markers: {
+                          Marker(
+                            markerId: MarkerId("user_marker"),
+                            position: LatLng(currentPosition.latitude,
+                                currentPosition.longitude),
+                            icon: _arrowIcon,
+                            rotation: _heading,
+                            anchor: Offset(0.5, 0.5),
+                          ),
+                        },
+                        myLocationEnabled: false,
+                        myLocationButtonEnabled: true,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildSearchRadiusButton(200),
+                          _buildSearchRadiusButton(300),
+                          _buildSearchRadiusButton(400),
+                          _buildSearchRadiusButton(500),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }
+            } else {
+              return Center(child: CircularProgressIndicator());
+            }
+          },
+        )
     );
   }
 }
