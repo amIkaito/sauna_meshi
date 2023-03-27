@@ -6,6 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator_platform_interface/geolocator_platform_interface.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart';
 
 class SearchRestaurantPage extends StatefulWidget {
   const SearchRestaurantPage({Key? key}) : super(key: key);
@@ -73,9 +74,21 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
       throw Exception('Failed to fetch nearby restaurants');
     }
   }
+  Future<BitmapDescriptor> _createRestaurantIcon() async {
+    final imageConfiguration = ImageConfiguration(devicePixelRatio: 2.0);
+    final icon = await BitmapDescriptor.fromAssetImage(
+      imageConfiguration,
+      'assets/restaurant_pin.png', // カスタムアイコンのアセットパス
+    );
+
+    return icon;
+  }
+
   Set<Marker> _markers = {};
 
   Future<void> _loadNearbyRestaurants() async {
+    final restaurantIcon = await _createRestaurantIcon();
+
     final restaurants = await fetchNearbyRestaurants(
         currentPosition.latitude, currentPosition.longitude, _searchRadius, 'AIzaSyDgO_lHM9F3zzKSQWDoVdpyvTulCXCoc_Q');
 
@@ -86,6 +99,7 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
           markerId: MarkerId(restaurant['name']),
           position: LatLng(restaurant['lat'], restaurant['lng']),
           infoWindow: InfoWindow(title: restaurant['name']),
+          icon: restaurantIcon,
         ));
       }
     });
@@ -134,12 +148,15 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
     });
   }
 
-  void _onMapCreated(GoogleMapController controller) {
+  void _onMapCreated(GoogleMapController controller) async {
     mapController = controller;
-    _loadNearbyRestaurants();
-    _startLocationUpdates();
+    try {
+      String mapStyle = await DefaultAssetBundle.of(context).loadString('assets/map_style.json');
+      mapController.setMapStyle(mapStyle);
+    } catch (e) {
+      print('Error loading map style: $e');
+    }
   }
-
   void _updateHeading(Position position) {
     double newHeading = position.heading;
 
@@ -176,6 +193,7 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
 
   Widget _buildGoToCurrentLocationButton() {
     return FloatingActionButton(
+      backgroundColor: Colors.blue,
       onPressed: _goToCurrentLocation,
       child: Icon(Icons.my_location),
     );
@@ -242,6 +260,7 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
                         },
                         myLocationEnabled: false,
                         myLocationButtonEnabled: true,
+                       mapToolbarEnabled: false,
                       ),
                       Positioned(
                         bottom: 16,
@@ -253,9 +272,8 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _buildSearchRadiusButton(200),
-                          _buildSearchRadiusButton(300),
-                          _buildSearchRadiusButton(400),
+                          _buildSearchRadiusButton(100),
+                          _buildSearchRadiusButton(250),
                           _buildSearchRadiusButton(500),
                         ],
                       ),
