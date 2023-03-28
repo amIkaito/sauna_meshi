@@ -15,11 +15,11 @@ class SearchRestaurantPage extends StatefulWidget {
   State<SearchRestaurantPage> createState() => _SearchRestaurantPageState();
 }
 
+
 class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
   late Future<Position> _initialLocationFuture;
   late GoogleMapController mapController;
   late Position currentPosition;
-  late BitmapDescriptor _arrowIcon;
   late StreamSubscription<Position> _positionStreamSubscription;
   int _searchRadius = 200;
   double _heading = 0;
@@ -38,7 +38,7 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
 
       // 除外したいキーワードのリストを作成します
       List<String> excludedKeywords = [
-        'カフェ',
+        'StarBucks',
         'コンビニ',
         'ドラッグストア',
         'ホテル',
@@ -74,23 +74,49 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
       throw Exception('Failed to fetch nearby restaurants');
     }
   }
-  Future<BitmapDescriptor> _createRestaurantIcon() async {
-    final imageConfiguration = ImageConfiguration(devicePixelRatio: 2.0);
-    final icon = await BitmapDescriptor.fromAssetImage(
-      imageConfiguration,
-      'assets/restaurant_pin.png', // カスタムアイコンのアセットパス
-    );
-
-    return icon;
-  }
 
   Set<Marker> _markers = {};
 
+
+
+  Future<BitmapDescriptor> _createRestaurantIcon() async {
+    final double scaleFactor = 10;
+    final ImageConfiguration imageConfiguration =
+    ImageConfiguration(devicePixelRatio: scaleFactor);
+    return await BitmapDescriptor.fromAssetImage(
+        imageConfiguration, 'assets/images/restaurant_pin.png');
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    _initialLocationFuture = _initializeLocation();
+  }
+
+
+  Future<Position> _initializeLocation() async {
+    await _requestLocationPermission();
+    return await _getCurrentLocation();
+  }
+
+  Future<void> _requestLocationPermission() async {
+    PermissionStatus status = await Permission.locationWhenInUse.request();
+
+    if (status.isDenied) {
+      // ユーザーが位置情報の許可を拒否した場合の処理
+      print("位置情報の許可が拒否されました。");
+    }
+  }
+
   Future<void> _loadNearbyRestaurants() async {
-    final restaurantIcon = await _createRestaurantIcon();
+    final BitmapDescriptor restaurantIcon = await _createRestaurantIcon();
 
     final restaurants = await fetchNearbyRestaurants(
-        currentPosition.latitude, currentPosition.longitude, _searchRadius, 'AIzaSyDgO_lHM9F3zzKSQWDoVdpyvTulCXCoc_Q');
+        currentPosition.latitude,
+        currentPosition.longitude,
+        _searchRadius,
+        'AIzaSyDgO_lHM9F3zzKSQWDoVdpyvTulCXCoc_Q');
 
     setState(() {
       _markers.clear();
@@ -106,32 +132,6 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
   }
 
 
-
-  @override
-  void initState() {
-    super.initState();
-    _loadArrowIcon();
-    _initialLocationFuture = _initializeLocation();
-  }
-
-  Future<void> _loadArrowIcon() async {
-    _arrowIcon = await BitmapDescriptor.fromAssetImage(
-        ImageConfiguration(devicePixelRatio: 2.0), 'assets/arrow.png');
-  }
-
-  Future<Position> _initializeLocation() async {
-    await _requestLocationPermission();
-    return await _getCurrentLocation();
-  }
-
-  Future<void> _requestLocationPermission() async {
-    PermissionStatus status = await Permission.locationWhenInUse.request();
-
-    if (status.isDenied) {
-      // ユーザーが位置情報の許可を拒否した場合の処理
-      print("位置情報の許可が拒否されました。");
-    }
-  }
 
   Future<Position> _getCurrentLocation() async {
     return await Geolocator.getCurrentPosition(
@@ -248,18 +248,9 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
                           target: LatLng(currentPosition.latitude,
                               currentPosition.longitude),
                         ),
-                        markers: {
-                          Marker(
-                            markerId: MarkerId("user_marker"),
-                            position: LatLng(currentPosition.latitude,
-                                currentPosition.longitude),
-                            icon: _arrowIcon,
-                            rotation: _heading,
-                            anchor: Offset(0.5, 0.5),
-                          ),
-                        },
-                        myLocationEnabled: false,
-                        myLocationButtonEnabled: true,
+                      markers: _markers,
+                        myLocationEnabled: true,
+                        myLocationButtonEnabled: false,
                        mapToolbarEnabled: false,
                       ),
                       Positioned(

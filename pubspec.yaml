@@ -21,10 +21,8 @@ dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/arrow.png
-    - assets/map_style.json
-    - assets/restaurant_pin.png
-
+  - assets/map_style.json
+  - assets/images/restaurant_pin.png
 dev_dependencies:
   flutter_test:
     sdk: flutter
