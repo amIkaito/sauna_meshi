@@ -12,13 +12,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'サウナ飯',
+      title: 'サウナ飯a',
       theme: ThemeData(
-
         primarySwatch: Colors.blue,
       ),
       home: const SearchRestaurantPage(),
     );
   }
 }
-

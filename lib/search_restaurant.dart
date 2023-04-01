@@ -220,62 +220,53 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          title: Text(
-            'サウナ飯',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
         body: FutureBuilder<Position>(
-          future: _initialLocationFuture,
-          builder: (BuildContext context, AsyncSnapshot<Position> snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              if (snapshot.hasError) {
-                return Center(child: Text("Error: ${snapshot.error}"));
-              } else {
-                currentPosition = snapshot.data!;
-                return Stack(
-                  children: [
-                    GoogleMap(
-                      onMapCreated: _onMapCreated,
-                      initialCameraPosition: CameraPosition(
-                        zoom: 17,
-                        target: LatLng(currentPosition.latitude,
-                            currentPosition.longitude),
-                      ),
-                      markers: _markers,
-                      myLocationEnabled: true,
-                      myLocationButtonEnabled: false,
-                      mapToolbarEnabled: false,
-                    ),
-                    Positioned(
-                      bottom: 16,
-                      right: 16,
-                      child: _buildGoToCurrentLocationButton(),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildSearchRadiusButton(100),
-                          _buildSearchRadiusButton(250),
-                          _buildSearchRadiusButton(500),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              }
-            } else {
-              return Center(child: CircularProgressIndicator());
-            }
-          },
-        ));
+      future: _initialLocationFuture,
+      builder: (BuildContext context, AsyncSnapshot<Position> snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          } else {
+            currentPosition = snapshot.data!;
+            return Stack(
+              children: [
+                GoogleMap(
+                  onMapCreated: _onMapCreated,
+                  initialCameraPosition: CameraPosition(
+                    zoom: 17,
+                    target: LatLng(
+                        currentPosition.latitude, currentPosition.longitude),
+                  ),
+                  markers: _markers,
+                  myLocationEnabled: true,
+                  myLocationButtonEnabled: false,
+                  mapToolbarEnabled: false,
+                ),
+                Positioned(
+                  bottom: 16, // 画面下部からの距離を指定
+                  left: 0,
+                  right: 0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildSearchRadiusButton(100),
+                      _buildSearchRadiusButton(250),
+                      _buildSearchRadiusButton(500),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  bottom: 80, // 画面下部5からの距離を指定（検索範囲ボタンの上になるように調整）
+                  right: 16, // 画面右端からの距離を指定
+                  child: _buildGoToCurrentLocationButton(),
+                ),
+              ],
+            );
+          }
+        } else {
+          return Center(child: CircularProgressIndicator());
+        }
+      },
+    ));
   }
 }
