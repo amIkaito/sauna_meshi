@@ -15,13 +15,12 @@ class SearchRestaurantPage extends StatefulWidget {
   State<SearchRestaurantPage> createState() => _SearchRestaurantPageState();
 }
 
-
 class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
+  int _searchRadius = 100;
   late Future<Position> _initialLocationFuture;
   late GoogleMapController mapController;
   late Position currentPosition;
   late StreamSubscription<Position> _positionStreamSubscription;
-  int _searchRadius = 200;
   double _heading = 0;
 
   Future<List<Map<String, dynamic>>> fetchNearbyRestaurants(
@@ -77,23 +76,24 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
 
   Set<Marker> _markers = {};
 
-
-
   Future<BitmapDescriptor> _createRestaurantIcon() async {
     final double scaleFactor = 10;
     final ImageConfiguration imageConfiguration =
-    ImageConfiguration(devicePixelRatio: scaleFactor);
+        ImageConfiguration(devicePixelRatio: scaleFactor);
     return await BitmapDescriptor.fromAssetImage(
         imageConfiguration, 'assets/images/restaurant_pin.png');
   }
-
 
   @override
   void initState() {
     super.initState();
     _initialLocationFuture = _initializeLocation();
+    _initialLocationFuture.then((position) {
+      currentPosition = position;
+      currentPosition = position;
+      _loadNearbyRestaurants();
+    });
   }
-
 
   Future<Position> _initializeLocation() async {
     await _requestLocationPermission();
@@ -131,8 +131,6 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
     });
   }
 
-
-
   Future<Position> _getCurrentLocation() async {
     return await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
@@ -151,12 +149,14 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
   void _onMapCreated(GoogleMapController controller) async {
     mapController = controller;
     try {
-      String mapStyle = await DefaultAssetBundle.of(context).loadString('assets/map_style.json');
+      String mapStyle = await DefaultAssetBundle.of(context)
+          .loadString('assets/map_style.json');
       mapController.setMapStyle(mapStyle);
     } catch (e) {
       print('Error loading map style: $e');
     }
   }
+
   void _updateHeading(Position position) {
     double newHeading = position.heading;
 
@@ -242,22 +242,22 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
                 return Stack(
                   children: [
                     GoogleMap(
-                        onMapCreated: _onMapCreated,
-                        initialCameraPosition: CameraPosition(
-                          zoom: 17,
-                          target: LatLng(currentPosition.latitude,
-                              currentPosition.longitude),
-                        ),
+                      onMapCreated: _onMapCreated,
+                      initialCameraPosition: CameraPosition(
+                        zoom: 17,
+                        target: LatLng(currentPosition.latitude,
+                            currentPosition.longitude),
+                      ),
                       markers: _markers,
-                        myLocationEnabled: true,
-                        myLocationButtonEnabled: false,
-                       mapToolbarEnabled: false,
-                      ),
-                      Positioned(
-                        bottom: 16,
-                        right: 16,
-                        child: _buildGoToCurrentLocationButton(),
-                      ),
+                      myLocationEnabled: true,
+                      myLocationButtonEnabled: false,
+                      mapToolbarEnabled: false,
+                    ),
+                    Positioned(
+                      bottom: 16,
+                      right: 16,
+                      child: _buildGoToCurrentLocationButton(),
+                    ),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Row(
@@ -276,7 +276,6 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
               return Center(child: CircularProgressIndicator());
             }
           },
-        )
-    );
+        ));
   }
 }
