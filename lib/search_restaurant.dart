@@ -7,6 +7,7 @@ import 'package:geolocator_platform_interface/geolocator_platform_interface.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SearchRestaurantPage extends StatefulWidget {
   const SearchRestaurantPage({Key? key}) : super(key: key);
@@ -64,6 +65,10 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
             'name': name,
             'lat': result['geometry']['location']['lat'],
             'lng': result['geometry']['location']['lng'],
+            'place_id': result['place_id'],
+            'opening_hours': result['opening_hours'] != null
+                ? (result['opening_hours']['open_now'] ? ['営業中'] : ['営業時間外'])
+                : ['Unknown'],
           });
         }
       }
@@ -124,11 +129,34 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
         _markers.add(Marker(
           markerId: MarkerId(restaurant['name']),
           position: LatLng(restaurant['lat'], restaurant['lng']),
-          infoWindow: InfoWindow(title: restaurant['name']),
+          infoWindow: InfoWindow(
+            title: restaurant['name'],
+            snippet: "営業時間: ${restaurant['opening_hours'].join(", ")}", // 追加
+            onTap: () {
+              _launchMapsUrl(restaurant['place_id']); // 追加
+            },
+          ),
           icon: restaurantIcon,
         ));
       }
     });
+  }
+
+  void _launchMapsUrl(String placeId) async {
+    String url =
+        'https://www.google.com/maps/dir/?api=1&destination_place_id=$placeId';
+
+    try {
+      if (await canLaunch(url)) {
+        await launch(url);
+      } else {
+        throw 'Could not launch $url';
+      }
+    } on PlatformException catch (e) {
+      print('PlatformException: $e');
+    } catch (e) {
+      print('Error: $e');
+    }
   }
 
   Future<Position> _getCurrentLocation() async {
@@ -176,17 +204,20 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
   }
 
   Widget _buildSearchRadiusButton(int radius) {
-    return ElevatedButton(
-      onPressed: () {
-        setState(() {
-          _searchRadius = radius;
-        });
-        _loadNearbyRestaurants();
-// TODO: ここで検索範囲が変更されたときの処理を実行します
-      },
-      child: Text('$radius m'),
-      style: ElevatedButton.styleFrom(
-        primary: _searchRadius == radius ? Colors.blue : Colors.grey,
+    return SizedBox(
+      width: 64,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: () {
+          setState(() {
+            _searchRadius = radius;
+          });
+          _loadNearbyRestaurants();
+        },
+        child: Text('$radius M'),
+        style: ElevatedButton.styleFrom(
+          primary: _searchRadius == radius ? Colors.blue : Colors.black,
+        ),
       ),
     );
   }

@@ -1,11 +1,11 @@
 name: sauna_meshi
 description: A new Flutter project.
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
 environment:
-  sdk: '>=2.19.5 <3.0.0'
+  sdk: ">=2.19.5 <3.0.0"
 
 dependencies:
   flutter:
@@ -17,12 +17,22 @@ dependencies:
   http: ^0.13.5
   permission_handler: ^10.2.0
   flutter_compass: ^0.7.0
+  url_launcher: ^6.1.10
+  flutter_native_splash: ^2.2.19
+
+flutter_native_splash:
+  color: "#42a5f5"
+  image: assets/splash.png
+  android: true
+  ios: true
 
 flutter:
   uses-material-design: true
   assets:
-  - assets/map_style.json
-  - assets/images/restaurant_pin.png
+    - assets/map_style.json
+    - assets/restaurant_pin.png
+    - assets/splash.png
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
