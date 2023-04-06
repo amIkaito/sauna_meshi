@@ -38,7 +38,7 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
 
       // 除外したいキーワードのリストを作成します
       List<String> excludedKeywords = [
-        'StarBucks',
+        //'StarBucks',
         'コンビニ',
         'ドラッグストア',
         'ホテル',
