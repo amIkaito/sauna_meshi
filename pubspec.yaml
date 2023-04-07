@@ -19,6 +19,12 @@ dependencies:
   flutter_compass: ^0.7.0
   url_launcher: ^6.1.10
   flutter_native_splash: ^2.2.19
+  flutter_launcher_icons: ^0.12.0
+
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon.png"
 
 flutter_native_splash:
   color: "#ffffff"
@@ -32,6 +38,7 @@ flutter:
     - assets/map_style.json
     - assets/restaurant_pin.png
     - assets/splash.png
+    - assets/icon.png
 
 dev_dependencies:
   flutter_test:
