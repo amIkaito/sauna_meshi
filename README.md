@@ -1,17 +1,29 @@
-# sauna_meshi
+サウナから出た後に営業中の飲食店を探すのがめんどくしいという問題を解決するために開発されたアプリです。
 
-A new Flutter project.
+機能
+ユーザーの現在位置から半径100m, 250m, 500mの範囲内にある営業中のレストランを検索できます。
+検索結果を地図上に表示し、レストランの情報をタップすると営業時間や場所を確認できます。
+地図上でユーザーの現在地を確認できます。
+ユーザーの現在地に戻るボタンがあります。
+技術
+フロントエンド: Flutter
+バックエンド: Google Maps Places API
+パッケージ: geolocator, permission_handler, http, url_launcher
+使用方法
+アプリを開くと、ユーザーの現在地が地図上に表示されます。
+ボトムにある3つのボタンから、検索範囲を選択してください。
+地図上に検索結果が表示されます。レストランのピンをタップすると、情報ウィンドウが表示されます。
+情報ウィンドウ内の「地図を見る」をタップすると、Googleマップアプリが起動し、レストランの場所を確認できます。
+地図右下にある現在地に戻るボタンをタップすると、現在地に戻ります。
+作者
+佐藤海斗
 
-## Getting Started
 
-This project is a starting point for a Flutter application.
 
-A few resources to get you started if this is your first Flutter project:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-# sauna_meshi
+
+
+
+
+
