@@ -4,6 +4,15 @@
 
 https://user-images.githubusercontent.com/100826002/230545850-eb72e0ed-5501-49d6-a71b-a275381c5c6b.mov
 
+## 技術スタック
+
+- Flutter
+- Dart
+- Google Maps API
+- Geolocator
+- Permission Handler
+- HTTP
+
 ## 機能
 
 - 現在地周辺の営業中の飲食店を表示
