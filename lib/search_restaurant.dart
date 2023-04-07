@@ -38,7 +38,7 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
 
       // 除外したいキーワードのリストを作成します
       List<String> excludedKeywords = [
-        'StarBucks',
+        //'StarBucks',
         'コンビニ',
         'ドラッグストア',
         'ホテル',
@@ -144,7 +144,7 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
 
   void _launchMapsUrl(String placeId) async {
     String url =
-        'https://www.google.com/maps/dir/?api=1&destination_place_id=$placeId';
+        'https://www.google.com/maps/search/?api=1&query=Google&query_place_id=$placeId';
 
     try {
       if (await canLaunch(url)) {
