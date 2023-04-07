@@ -26,9 +26,9 @@ https://user-images.githubusercontent.com/100826002/230545850-eb72e0ed-5501-49d6
 1. このリポジトリをクローンまたはダウンロードします。
 ```git clone https://github.com/yourusername/sauna-meshi.git```
 2. 必要な依存関係をインストールします。
-'flutter pub get'
+```flutter pub get```
 3. アプリケーションを実行します。
-'flutter run'
+```flutter run```
 
 
 ## 使用方法
