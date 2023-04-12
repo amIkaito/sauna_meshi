@@ -1,0 +1,4 @@
+#Mon Apr 10 14:07:49 JST 2023
+base.0=/Users/skkaito/AndroidStudioProjects/sauna_meshi/android/build/app/intermediates/dex/debug/mergeDexDebug/classes.dex
+renamed.0=classes.dex
+path.0=classes.dex
