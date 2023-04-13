@@ -160,9 +160,24 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
   }
 
   Future<Position> _getCurrentLocation() async {
-    return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
+    try {
+      return await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+    } catch (e) {
+      print("位置情報が取得できませんでした。デフォルトの位置情報を使用します。");
+      return Position(
+        latitude: 35.6895, // デフォルトの緯度
+        longitude: 139.6917, // デフォルトの経度
+        timestamp: DateTime.now(),
+        altitude: 0.0,
+        heading: 0.0,
+        speed: 0.0,
+        speedAccuracy: 0.0,
+        accuracy: 0.0,
+        isMocked: false,
+      );
+    }
   }
 
   void _startLocationUpdates() {
