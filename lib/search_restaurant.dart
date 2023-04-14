@@ -111,6 +111,23 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
     if (status.isDenied) {
       // ユーザーが位置情報の許可を拒否した場合の処理
       print("位置情報の許可が拒否されました。");
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('位置情報が許可されていません'),
+            content: Text('アプリの設定で位置情報のアクセスを許可してください。'),
+            actions: [
+              TextButton(
+                child: Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
     }
   }
 
@@ -165,18 +182,7 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
         desiredAccuracy: LocationAccuracy.high,
       );
     } catch (e) {
-      print("位置情報が取得できませんでした。デフォルトの位置情報を使用します。");
-      return Position(
-        latitude: 35.6895, // デフォルトの緯度
-        longitude: 139.6917, // デフォルトの経度
-        timestamp: DateTime.now(),
-        altitude: 0.0,
-        heading: 0.0,
-        speed: 0.0,
-        speedAccuracy: 0.0,
-        accuracy: 0.0,
-        isMocked: false,
-      );
+      throw Exception("位置情報が許可されていません");
     }
   }
 
@@ -271,7 +277,8 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
       builder: (BuildContext context, AsyncSnapshot<Position> snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
+            return Center(
+                child: Text("位置情報が許可されていません。サウナ飯を使用するには位置情報の許可をしてください。"));
           } else {
             currentPosition = snapshot.data!;
             return Stack(
