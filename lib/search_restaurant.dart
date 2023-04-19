@@ -220,7 +220,7 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
 
   Widget _buildSearchRadiusButton(int radius) {
     return SizedBox(
-      width: 64,
+      width: 80, // 幅を広くする
       height: 56,
       child: ElevatedButton(
         onPressed: () {
@@ -229,9 +229,13 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
           });
           _loadNearbyRestaurants();
         },
-        child: Text('$radius M'),
+        child: Text('$radius m'),
         style: ElevatedButton.styleFrom(
           primary: _searchRadius == radius ? Colors.blue : Colors.black,
+          shape: RoundedRectangleBorder(
+            // 角を丸くする
+            borderRadius: BorderRadius.circular(30), // 角の丸さの度合いを指定
+          ),
         ),
       ),
     );
@@ -289,9 +293,9 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
                   mapToolbarEnabled: false,
                 ),
                 Positioned(
-                  bottom: 16, // 画面下部からの距離を指定
-                  left: 0,
-                  right: 0,
+                  bottom: 20, // 画面下部からの距離を指定
+                  left: 16,
+                  right: 10,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -302,8 +306,8 @@ class _SearchRestaurantPageState extends State<SearchRestaurantPage> {
                   ),
                 ),
                 Positioned(
-                  bottom: 80, // 画面下部5からの距離を指定（検索範囲ボタンの上になるように調整）
-                  right: 16, // 画面右端からの距離を指定
+                  bottom: 90, // 画面下部5からの距離を指定（検索範囲ボタンの上になるように調整）
+                  right: 50, // 画面右端からの距離を指定
                   child: _buildGoToCurrentLocationButton(),
                 ),
               ],
